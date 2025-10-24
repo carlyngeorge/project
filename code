@@ -1,0 +1,147 @@
+import java.io.*;
+import java.time.LocalDate;
+import java.util.*;
+
+class Task implements Serializable {
+    private String title;
+    private String description;
+    private LocalDate dueDate;
+    private String priority;
+    private boolean completed;
+
+    public Task(String title, String description, LocalDate dueDate, String priority) {
+        this.title = title;
+        this.description = description;
+        this.dueDate = dueDate;
+        this.priority = priority;
+        this.completed = false;
+    }
+
+    public void markCompleted() {
+        completed = true;
+    }
+
+    public boolean isCompleted() {
+        return completed;
+    }
+
+    public LocalDate getDueDate() {
+        return dueDate;
+    }
+
+    public String getPriority() {
+        return priority;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    @Override
+    public String toString() {
+        return "Title: " + title + "\nDescription: " + description + 
+               "\nDue Date: " + dueDate + "\nPriority: " + priority + 
+               "\nCompleted: " + completed + "\n";
+    }
+}
+
+public class SmartToDoList {
+    private static final String FILE_NAME = "tasks.dat";
+    private static List<Task> tasks = new ArrayList<>();
+    private static Scanner sc = new Scanner(System.in);
+
+    public static void main(String[] args) {
+        loadTasks();
+        int choice;
+        do {
+            System.out.println("\n--- Smart To-Do List ---");
+            System.out.println("1. Add Task");
+            System.out.println("2. View Tasks");
+            System.out.println("3. Mark Task Completed");
+            System.out.println("4. Delete Task");
+            System.out.println("5. Exit");
+            System.out.print("Enter choice: ");
+            choice = sc.nextInt();
+            sc.nextLine();
+
+            switch(choice) {
+                case 1: addTask(); break;
+                case 2: viewTasks(); break;
+                case 3: markCompleted(); break;
+                case 4: deleteTask(); break;
+                case 5: saveTasks(); System.out.println("Exiting..."); break;
+                default: System.out.println("Invalid choice!"); break;
+            }
+        } while(choice != 5);
+    }
+
+    private static void addTask() {
+        System.out.print("Enter Title: ");
+        String title = sc.nextLine();
+        System.out.print("Enter Description: ");
+        String desc = sc.nextLine();
+        System.out.print("Enter Due Date (YYYY-MM-DD): ");
+        LocalDate dueDate = LocalDate.parse(sc.nextLine());
+        System.out.print("Enter Priority (High/Medium/Low): ");
+        String priority = sc.nextLine();
+
+        tasks.add(new Task(title, desc, dueDate, priority));
+        System.out.println("Task added successfully!");
+    }
+
+    private static void viewTasks() {
+        if(tasks.isEmpty()) {
+            System.out.println("No tasks found.");
+            return;
+        }
+        tasks.sort(Comparator.comparing(Task::getDueDate));
+        System.out.println("\n--- Task List ---");
+        int i = 1;
+        for(Task t : tasks) {
+            System.out.println(i + ". " + t);
+            i++;
+        }
+    }
+
+    private static void markCompleted() {
+        viewTasks();
+        System.out.print("Enter task number to mark as completed: ");
+        int index = sc.nextInt();
+        sc.nextLine();
+        if(index > 0 && index <= tasks.size()) {
+            tasks.get(index - 1).markCompleted();
+            System.out.println("Task marked as completed!");
+        } else {
+            System.out.println("Invalid task number!");
+        }
+    }
+
+    private static void deleteTask() {
+        viewTasks();
+        System.out.print("Enter task number to delete: ");
+        int index = sc.nextInt();
+        sc.nextLine();
+        if(index > 0 && index <= tasks.size()) {
+            tasks.remove(index - 1);
+            System.out.println("Task deleted!");
+        } else {
+            System.out.println("Invalid task number!");
+        }
+    }
+
+    private static void saveTasks() {
+        try(ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(FILE_NAME))) {
+            out.writeObject(tasks);
+        } catch(Exception e) {
+            System.out.println("Error saving tasks: " + e.getMessage());
+        }
+    }
+
+    private static void loadTasks() {
+        try(ObjectInputStream in = new ObjectInputStream(new FileInputStream(FILE_NAME))) {
+            tasks = (ArrayList<Task>) in.readObject();
+        } catch(Exception e) {
+            tasks = new ArrayList<>();
+        }
+    }
+}
